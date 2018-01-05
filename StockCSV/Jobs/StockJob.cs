@@ -10,7 +10,7 @@ namespace StockCSV.Jobs
     public class StockJob : Job
     {
 
-        private readonly VulnService service = new VulnService();
+        //private readonly VulnService service = new VulnService();
 
         public override string GetName()
         {
@@ -20,7 +20,7 @@ namespace StockCSV.Jobs
         public override void DoJob()
         {
             Console.WriteLine($"The Job \"{this.GetEndpoint()}\" was executed.");
-            this.service.InsertVulnerabilities(this.GetEndpoint()).Wait();
+            //this.service.InsertVulnerabilities(this.GetEndpoint()).Wait();
         }
 
         public override bool IsRepeatable()
