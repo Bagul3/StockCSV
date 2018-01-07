@@ -22,9 +22,7 @@ namespace StockCSV.Mechanism
             return null;
         }
 
-        public abstract string GetEndpoint();
-
-        public abstract string GetName();
+        public abstract string GetRef();
 
         public abstract void DoJob();
 

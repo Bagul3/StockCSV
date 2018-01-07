@@ -11,16 +11,18 @@ namespace StockCSV.Jobs
     {
 
         //private readonly VulnService service = new VulnService();
+        private readonly Database _database = new Database(@"C:\Users\van-d\Downloads\Cordners Data Dump\Cordners Data Dump\");
+        private string _ref;
 
-        public override string GetName()
+        public StockJob(string _ref)
         {
-            return this.GetType().Name;
+            this._ref = _ref;
         }
 
         public override void DoJob()
         {
-            Console.WriteLine($"The Job \"{this.GetEndpoint()}\" was executed.");
-            //this.service.InsertVulnerabilities(this.GetEndpoint()).Wait();
+            Console.WriteLine($"The Job \"{this.GetRef()}\" was executed.");
+            this._database.StockQuery(this.GetRef());
         }
 
         public override bool IsRepeatable()
@@ -28,7 +30,7 @@ namespace StockCSV.Jobs
             return true;
         }
 
-        public override string GetEndpoint()
+        public override string GetRef()
         {
             return "Apache";
         }
