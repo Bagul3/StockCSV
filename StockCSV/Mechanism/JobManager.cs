@@ -30,28 +30,28 @@ namespace StockCSV.Mechanism
 
                 if (jobs != null && jobs.Any())
                 {
-                    foreach (var job in jobs)
-                    {
-                        if (IsRealClass(job))
-                        {
-                            try
-                            {
-                                var instanceJob = Activator.CreateInstance(job);
-                                Console.WriteLine($"The Job \"{instanceJob.GetEndpoint()}\" has been instantiated successfully.");
-                                var thread = new Thread(instanceJob.ExecuteJob);
-                                thread.Start();
-                                Console.WriteLine($"The Job \"{instanceJob.GetEndpoint()}\" has its thread started successfully.");
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"The Job \"{job.GetRef()}\" could not be instantiated or executed.", ex);
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine($"The Job \"{job.GetRef()}\" cannot be instantiated.");
-                        }
-                    }
+                    //foreach (var job in jobs)
+                    //{
+                    //    if (IsRealClass(job))
+                    //    {
+                    //        try
+                    //        {
+                    //            ///var instanceJob = Activator.CreateInstance(job);
+                    //            Console.WriteLine($"The Job \"{instanceJob.GetEndpoint()}\" has been instantiated successfully.");
+                    //            var thread = new Thread(instanceJob.ExecuteJob);
+                    //            thread.Start();
+                    //            Console.WriteLine($"The Job \"{instanceJob.GetEndpoint()}\" has its thread started successfully.");
+                    //        }
+                    //        catch (Exception ex)
+                    //        {
+                    //            Console.WriteLine($"The Job \"{job.GetRef()}\" could not be instantiated or executed.", ex);
+                    //        }
+                    //    }
+                    //    else
+                    //    {
+                    //        Console.WriteLine($"The Job \"{job.GetRef()}\" cannot be instantiated.");
+                    //    }
+                    //}
                 }
             }
             catch (Exception ex)
