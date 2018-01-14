@@ -13,8 +13,8 @@ namespace StockCSV
             Database database = new Database();
             var result = database.QueryDescriptionXLX();
             database = new Database(@"C:\Users\van-d\Downloads\Cordners Data Dump\Cordners Data Dump\");
-            database.CreateDBFFile(result);
-            database.StockQuery("");
+            //database.CreateDBFFile(result);
+            database.StockQuery(result);
         }
     }
 }

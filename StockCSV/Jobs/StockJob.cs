@@ -22,7 +22,7 @@ namespace StockCSV.Jobs
         public override void DoJob()
         {
             Console.WriteLine($"The Job \"{this.GetRef()}\" was executed.");
-            this._database.StockQuery(this.GetRef());
+           // this._database.StockQuery(this.GetRef());
         }
 
         public override bool IsRepeatable()
