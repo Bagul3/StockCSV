@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.OleDb;
 using System.Data.SqlClient;
@@ -7,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using StockCSV.CordnersConfiguration;
 
 namespace StockCSV
 {
@@ -39,7 +41,7 @@ namespace StockCSV
 
         public void CreateDBFFile(List<string> T2TREFs)
         {
-            string connectionString = @"Provider = Microsoft.Jet.OLEDB.4.0; Data Source = C:\Users\Conor\Desktop\Cordners Data Dump\; Extended Properties = dBase IV";
+            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["Cordners"].ConnectionString;
             using (OleDbConnection connection = new OleDbConnection(connectionString))
             {
                 connection.Open();
@@ -50,7 +52,7 @@ namespace StockCSV
                 connection.Close();
             }
             
-            using (OleDbConnection connection = new OleDbConnection(@"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\Users\Conor\Desktop\Cordners Data Dump\;Extended Properties=dBASE III;"))
+            using (OleDbConnection connection = new OleDbConnection())
             {
                 connection.Open();
                 OleDbCommand command = connection.CreateCommand();
@@ -66,8 +68,8 @@ namespace StockCSV
 
         public StringBuilder StockQuery(List<string> T2TREFs)
         {
-            string con = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\Users\Conor\Desktop\Cordners Data Dump\;Extended Properties=dBASE III;";
-
+            var location = CordnerConfigurationSection.CordnerConfig.OutputLocation.ToString();
+            var con = System.Configuration.ConfigurationManager.ConnectionStrings["Cordners"].ConnectionString;
             var csv = new StringBuilder();
 
             using (OleDbConnection connectionHandler = new OleDbConnection(con))
@@ -78,14 +80,6 @@ namespace StockCSV
                 csv.AppendLine(headers);
                 foreach (var reff in T2TREFs)
                 {
-
-                    //var stockQuery = @"SELECT ([T2_BRA].[REF] + [T2_LOOK].[F7]) AS NewStyle, T2_HEAD.SHORT, T2_HEAD.DESC, T2_HEAD.GROUP, T2_HEAD.STYPE, T2_HEAD.SIZERANGE, T2_HEAD.SUPPLIER, T2_HEAD.SUPPREF, T2_HEAD.VAT, T2_HEAD.BASESELL, T2_HEAD.SELL, T2_HEAD.SELLB, T2_HEAD.SELL1, Sum(T2_BRA.Q11) AS QTY1, Sum(T2_BRA.Q12) AS QTY2, Sum(T2_BRA.Q13) AS QTY3, Sum(T2_BRA.Q14) AS QTY4, Sum(T2_BRA.Q15) AS QTY5, Sum(T2_BRA.Q16) AS QTY6, Sum(T2_BRA.Q17) AS QTY7, Sum(T2_BRA.Q18) AS QTY8, Sum(T2_BRA.Q19) AS QTY9, Sum(T2_BRA.Q20) AS QTY10, Sum(T2_BRA.Q21) AS QTY11, Sum(T2_BRA.Q22) AS QTY12, Sum(T2_BRA.Q23) AS QTY13,
-                    //Sum(T2_BRA.LY11) AS LY1, Sum(T2_BRA.LY12) AS LY2, Sum(T2_BRA.LY13) AS LY3, Sum(T2_BRA.LY14) AS LY4, Sum(T2_BRA.LY15) AS LY5, Sum(T2_BRA.LY16) AS LY6, Sum(T2_BRA.LY17) AS LY7, Sum(T2_BRA.LY18) AS LY8, Sum(T2_BRA.LY19) AS LY9, Sum(T2_BRA.LY20) AS LY10, Sum(T2_BRA.LY21) AS LY11, Sum(T2_BRA.LY22) AS LY12, Sum(T2_BRA.LY23) AS LY13 
-                    //    FROM T2_LOOK INNER JOIN (T2_BRA INNER JOIN  T2_HEAD ON T2_BRA.REF = T2_HEAD.REF) ON T2_BRA.COLOUR = Right(T2_LOOK.[KEY],3)
-                    //        WHERE T2_BRA.REF = ?
-                    //            Group By ([T2_BRA].[REF] + [T2_LOOK].[F7]) , T2_HEAD.Short, T2_HEAD.Desc, T2_HEAD.Group, T2_HEAD.STYPE, T2_HEAD.SIZERANGE, T2_HEAD.SUPPLIER, T2_HEAD.SUPPREF, T2_HEAD.VAT, T2_HEAD.BASESELL, T2_HEAD.SELL, T2_HEAD.SELLB, T2_HEAD.SELL1
-                    //                ORDER BY ([T2_BRA].[REF] + [T2_LOOK].[F7]) DESC";
-
                     var stockQuery =
                         @"SELECT ([T2_BRA].[REF] + [F7]) AS NewStyle, T2_HEAD.SHORT, T2_HEAD.[DESC], T2_HEAD.[GROUP], 
 		T2_HEAD.STYPE, T2_HEAD.SIZERANGE,
@@ -169,7 +163,7 @@ namespace StockCSV
                                     }
                                     string append = (1000 + i).ToString();
                                     GroupSKUS = dr["NewStyle"].ToString();
-                                    var GroupSKUS2 = dr["NewStyle"].ToString() + append.Substring(1, 3);
+                                    var GroupSKUS2 = dr["NewStyle"] + append.Substring(1, 3);
                                     var newLine = string.Format("{0},{1},{2}", GroupSKUS2, actualStock, is_stock);
                                     csv.AppendLine(newLine);
                                 }
@@ -199,30 +193,26 @@ namespace StockCSV
 
                 }
             }
-            File.AppendAllText(@"C:\Users\Conor\Desktop\Cordners Data Dump\stocknew.csv", csv.ToString());
+            File.AppendAllText(CordnerConfigurationSection.CordnerConfig.OutputLocation.ToString(), csv.ToString());
             return null;
         }
 
-        public List<string> QueryDescriptionXLX()
+        public List<string> QueryDescriptionRefs()
         {
-            var query = "Select T2TREF FROM";
-            OleDbConnection con = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\Conor\Desktop\Cordners Data Dump\descriptions.xls;Extended Properties='Excel 12.0;IMEX=1;'");
-            StringBuilder stbQuery = new StringBuilder();
-            stbQuery.Append("SELECT * FROM [Sheet1$A:A]");
-            OleDbDataAdapter adp = new OleDbDataAdapter(stbQuery.ToString(), con);
+            var dvEmp = new DataView();
+            var location = CordnerConfigurationSection.CordnerConfig.OutputLocation.ToString();
 
-            DataSet dsXLS = new DataSet();
-            adp.Fill(dsXLS);
-            DataView dvEmp = new DataView(dsXLS.Tables[0]);
-
-            List<string> descriptionSkuNumbers = new List<string>();
-
-            foreach (DataRow row in dvEmp.Table.Rows)
+            using (var connectionHandler = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\Conor\Desktop\Cordners Data Dump\descriptions.xls;Extended Properties='Excel 12.0;IMEX=1;'"))
             {
-                descriptionSkuNumbers.Add(row.ItemArray[0].ToString());
-            }
+                connectionHandler.Open();
+                var adp = new OleDbDataAdapter("SELECT * FROM [Sheet1$A:A]", connectionHandler);
 
-            return descriptionSkuNumbers;
+                var dsXls = new DataSet();
+                adp.Fill(dsXls);
+                dvEmp = new DataView(dsXls.Tables[0]);
+            }
+            
+            return (from DataRow row in dvEmp.Table.Rows select row.ItemArray[0].ToString()).ToList();
 
         }
 

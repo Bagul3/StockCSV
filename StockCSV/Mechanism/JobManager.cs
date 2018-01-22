@@ -25,7 +25,7 @@ namespace StockCSV.Mechanism
             {
                 //var jobs = GetAllTypesImplementingInterface(typeof(Job));
                 
-                var refs = _database.QueryDescriptionXLX();
+                var refs = _database.QueryDescriptionRefs();
                 var jobs = BuildJobs(refs);
 
                 if (jobs != null && jobs.Any())
