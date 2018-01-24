@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 
 namespace StockCSV.Mechanism
 {
@@ -10,11 +11,21 @@ namespace StockCSV.Mechanism
             {
                 while (true)
                 {
-                    this.DoJob();
-                    Thread.Sleep(this.GetRepetitionIntervalTime());
+                    var start = TimeSpan.Parse("06:30");  // 10 PM
+                    var end = TimeSpan.Parse("06:45");    // 2 AM
+                    var now = DateTime.Now.TimeOfDay;
+
+                    if (now > start && now < end)
+                    {
+                    
+                            Console.WriteLine($"The Clean Job thread started successfully.");
+                            new LogWriter("The Clean Job thread started successfully");
+                            this.DoCleanup();
+                            this.DoJob();
+                            Thread.Sleep(this.GetRepetitionIntervalTime());
+                    }
                 }
             }
-            this.DoJob();
         }
 
         public virtual object GetParameters()
@@ -22,9 +33,9 @@ namespace StockCSV.Mechanism
             return null;
         }
 
-        public abstract string GetRef();
-
         public abstract void DoJob();
+
+        public abstract void DoCleanup();
 
         public abstract bool IsRepeatable();
 

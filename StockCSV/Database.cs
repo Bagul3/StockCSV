@@ -1,90 +1,66 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
 using System.Data.OleDb;
-using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using StockCSV.CordnersConfiguration;
+using StockCSV.Mechanism;
 
 namespace StockCSV
 {
-    public class Database
+    public class Database : Job
     {
-        string connectionPath = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source = ";
-        OleDbConnection accessConnection = null;
+        //private const string OutputPath = @"C:\Users\Conor\Documents\stock.csv";
+        //private const string ExcelConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\Conor\Desktop\Cordners Data Dump\descriptions.xls;Extended Properties='Excel 12.0;IMEX=1;'";
+        //private const string AccessConnectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\Users\Conor\Desktop\Cordners Data Dump\;Extended Properties=dBASE III;";
+        private LogWriter _logger = new LogWriter();
 
-        public Database(string databaseConnectionString)
+        public void CreateDbfFile(List<string> T2TREFs)
         {
-            connectionPath += databaseConnectionString;
-        }
-
-        public Database()
-        {
-
-        }
-
-        private void OpenConnection(string accessConnectionPath)
-        {
-            try
-            {
-                accessConnection = new OleDbConnection(accessConnectionPath);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: Failed to create a database connection. \n{0}", ex.Message);
-            }
-        }
-
-        public void CreateDBFFile(List<string> T2TREFs)
-        {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["Cordners"].ConnectionString;
-            using (OleDbConnection connection = new OleDbConnection(connectionString))
+            using (var connection = new OleDbConnection(System.Configuration.ConfigurationManager.AppSettings["AccessConnectionString"]))
             {
                 connection.Open();
-                OleDbCommand command = connection.CreateCommand();
+                var command = connection.CreateCommand();
 
                 command.CommandText = "create table Descriptions(T2TREF int)";
                 command.ExecuteNonQuery();
                 connection.Close();
             }
             
-            using (OleDbConnection connection = new OleDbConnection())
+            using (var connection = new OleDbConnection())
             {
                 connection.Open();
-                OleDbCommand command = connection.CreateCommand();
-                foreach (var t2tref in T2TREFs)
+                var command = connection.CreateCommand();
+                foreach (var t2Tref in T2TREFs)
                 {
                     var sql = "Insert INTO DESCRIPT (T2TREF) VALUES ({0});";                    
-                    sql = string.Format(sql, String.Format("{0:00000}", t2tref));
+                    sql = string.Format(sql, String.Format("{0:00000}", t2Tref));
                     command.CommandText = sql;
                     command.ExecuteNonQuery();
                 }
             }                
         }
 
-        public StringBuilder StockQuery(List<string> T2TREFs)
+        public override void DoJob()
         {
-            var location = CordnerConfigurationSection.CordnerConfig.OutputLocation.ToString();
-            var con = System.Configuration.ConfigurationManager.ConnectionStrings["Cordners"].ConnectionString;
+            var t2TreFs = QueryDescriptionRefs();
             var csv = new StringBuilder();
+            Console.WriteLine("Generating stock.csv: This will take a few minutes, please wait....");
+            _logger.LogWrite("Generating stock.csv: This will take a few minutes, please wait....");
 
-            using (OleDbConnection connectionHandler = new OleDbConnection(con))
+            using (var connectionHandler = new OleDbConnection(System.Configuration.ConfigurationManager.AppSettings["AccessConnectionString"]))
             {
                 connectionHandler.Open();
 
-                var headers = string.Format("{0},{1},{2}", "sku", "qty", "is_in_stock");
+                var headers = $"{"sku"},{"qty"},{"is_in_stock"}";
                 csv.AppendLine(headers);
-                foreach (var reff in T2TREFs)
+                foreach (var reff in t2TreFs)
                 {
-                    var stockQuery =
-                        @"SELECT ([T2_BRA].[REF] + [F7]) AS NewStyle, T2_HEAD.SHORT, T2_HEAD.[DESC], T2_HEAD.[GROUP], 
+                    const string stockQuery = @"SELECT ([T2_BRA].[REF] + [F7]) AS NewStyle, T2_HEAD.SHORT, T2_HEAD.[DESC], T2_HEAD.[GROUP], 
 		T2_HEAD.STYPE, T2_HEAD.SIZERANGE,
 					T2_HEAD.SUPPLIER, T2_HEAD.SUPPREF, T2_HEAD.VAT, 
-						T2_HEAD.BASESELL, T2_HEAD.SELL, T2_HEAD.SELLB, T2_HEAD.SELL1,
+						T2_HEAD.BASESELL, T2_HEAD.SELL, T2_HEAD.SELLB, T2_HEAD.SELL1, Dept.MasterDept, Dept.MasterDept,
 
 			Sum(T2_BRA.Q11) AS QTY1, Sum(T2_BRA.Q12) AS QTY2, 
                 Sum(T2_BRA.Q13) AS QTY3, Sum(T2_BRA.Q14) AS QTY4, Sum(T2_BRA.Q15) AS QTY5, Sum(T2_BRA.Q16) AS QTY6, Sum(T2_BRA.Q17) AS QTY7, Sum(T2_BRA.Q18) AS QTY8, 
@@ -92,19 +68,19 @@ namespace StockCSV
                         Sum(T2_BRA.LY11) AS LY1, Sum(T2_BRA.LY12) AS LY2, Sum(T2_BRA.LY13) AS LY3, Sum(T2_BRA.LY14) AS LY4, Sum(T2_BRA.LY15) AS LY5, 
                             Sum(T2_BRA.LY16) AS LY6, Sum(T2_BRA.LY17) AS LY7, Sum(T2_BRA.LY18) AS LY8, Sum(T2_BRA.LY19) AS LY9, Sum(T2_BRA.LY20) AS LY10, 
                                 Sum(T2_BRA.LY21) AS LY11, Sum(T2_BRA.LY22) AS LY12, Sum(T2_BRA.LY23) AS LY13 
-                                    
-									
-									
-									FROM (((((T2_BRA INNER JOIN T2_HEAD ON T2_BRA.REF = T2_HEAD.REF) INNER JOIN (SELECT Right(T2_LOOK.[KEY],3) AS NewCol, T2_LOOK.F1 AS MasterColour, Left(T2_LOOK.[KEY],3) AS Col, T2_LOOK.F7
+									FROM ((((((T2_BRA INNER JOIN T2_HEAD ON T2_BRA.REF = T2_HEAD.REF) INNER JOIN (SELECT Right(T2_LOOK.[KEY],3) AS NewCol, T2_LOOK.F1 AS MasterColour, Left(T2_LOOK.[KEY],3) AS Col, T2_LOOK.F7
 								FROM T2_LOOK
 								WHERE (Left(T2_LOOK.[KEY],3))='COL') as Colour ON T2_BRA.COLOUR = Colour.NewCol) INNER JOIN 
 
-								(SELECT MID(T2_LOOK.[KEY],4,6) AS SuppCode, T2_LOOK.F1 AS MasterSupplier
+								(SELECT Mid(T2_LOOK.[KEY],4,6) AS SuppCode, T2_LOOK.F1 AS MasterSupplier
 									FROM T2_LOOK
 										WHERE (((Left(T2_LOOK.[KEY],3))='SUP'))
 											) as  Suppliers ON T2_HEAD.SUPPLIER = Suppliers.SuppCode) INNER JOIN
 
-								(SELECT MID(T2_LOOK.[KEY], 4, 6) AS StkType,
+											(SELECT Right([T2_LOOK].[KEY],3) AS DeptCode, T2_LOOK.F1 AS MasterDept
+												FROM T2_LOOK
+													WHERE (Left([T2_LOOK].[KEY],3))='TYP') As Dept ON T2_HEAD.STYPE = Dept.DeptCode) INNER JOIN
+								(SELECT Mid(T2_LOOK.[KEY], 4, 6) AS StkType,
 									T2_LOOK.F1 AS MasterStocktype
 										FROM T2_LOOK
 											WHERE Left(T2_LOOK.[KEY], 3) = 'CAT'
@@ -116,28 +92,28 @@ namespace StockCSV
 											WHERE (Left(T2_LOOK.[KEY],3))='US2') AS SubDept ON T2_HEAD.USER2 = SubDept.SubDeptCode)
                                     WHERE [T2_BRA].[REF] = ?
 									GROUP BY ([T2_BRA].[REF] + [F7]),
-									T2_HEAD.SHORT, T2_HEAD.[DESC], T2_HEAD.[GROUP], T2_HEAD.STYPE, T2_HEAD.SIZERANGE, T2_HEAD.SUPPLIER, T2_HEAD.SUPPREF, 
+									T2_HEAD.SHORT, T2_HEAD.[DESC], T2_HEAD.[GROUP],  Dept.MasterDept, T2_HEAD.STYPE, T2_HEAD.SIZERANGE, T2_HEAD.SUPPLIER, T2_HEAD.SUPPREF, 
 									T2_HEAD.VAT, T2_HEAD.BASESELL, T2_HEAD.SELL, T2_HEAD.SELLB, T2_HEAD.SELL1, T2_HEAD.REF
                                     ORDER BY ([T2_BRA].[REF] + [F7]) DESC";
 
-                    DataSet data = new DataSet();
-                    OleDbCommand myAccessCommand = new OleDbCommand(stockQuery, connectionHandler);
+                    var data = new DataSet();
+                    var myAccessCommand = new OleDbCommand(stockQuery, connectionHandler);
                     myAccessCommand.Parameters.AddWithValue("?", reff);
 
-                    OleDbDataAdapter myDataAdapter = new OleDbDataAdapter(myAccessCommand);
+                    var myDataAdapter = new OleDbDataAdapter(myAccessCommand);
                     myDataAdapter.Fill(data);
 
                     var actualStock = "0";
-                    var is_stock = 0;
-                    var InStockFlag = false;
-                    var GroupSKUS = "";
-                    var salesPrice = "";
+                    var inStockFlag = false;
+                    var groupSkus = "";
 
                     foreach (DataRow dr in data.Tables[0].Rows)
                     {
+                        _logger.LogWrite("Working....");
+                        var isStock = 0;
                         for (var i = 1; i < 14; i++)
                         {
-                            if (!String.IsNullOrEmpty(dr["QTY" + i].ToString()))
+                            if (!string.IsNullOrEmpty(dr["QTY" + i].ToString()))
                             {
                                 if (dr["QTY" + i].ToString() != "")
                                 {
@@ -154,109 +130,85 @@ namespace StockCSV
                                                 .ToString();
                                         }
 
-                                        is_stock = 1;
-                                        InStockFlag = true;
+                                        isStock = 1;
+                                        inStockFlag = true;
                                     }
                                     else
                                     {
-                                        is_stock = 0;
+                                        isStock = 0;
                                     }
-                                    string append = (1000 + i).ToString();
-                                    GroupSKUS = dr["NewStyle"].ToString();
-                                    var GroupSKUS2 = dr["NewStyle"] + append.Substring(1, 3);
-                                    var newLine = string.Format("{0},{1},{2}", GroupSKUS2, actualStock, is_stock);
+                                    var append = (1000 + i).ToString();
+                                    groupSkus = dr["NewStyle"].ToString();
+                                    var groupSkus2 = dr["NewStyle"] + append.Substring(1, 3);
+                                    var newLine = $"{groupSkus2},{actualStock},{isStock}";
                                     csv.AppendLine(newLine);
                                 }
                                 actualStock = "0";
                             }
                         }
 
-                        if (InStockFlag)
+                        isStock = inStockFlag ? 1 : 0;
+                        if (!string.IsNullOrEmpty(dr["NewStyle"].ToString()))
                         {
-                            is_stock = 1;
-                        }
-                        else
-                        {
-                            is_stock = 0;
-                        }
-                        if (!String.IsNullOrEmpty(dr["NewStyle"].ToString()))
-                        {
-                            var newLine2 = string.Format("{0},{1},{2}", GroupSKUS, actualStock, is_stock);
+                            var newLine2 = $"{groupSkus},{actualStock},{isStock}";
                             csv.AppendLine(newLine2);
                         }
-                        InStockFlag = false;
+                        inStockFlag = false;
                         if (data.Tables[0].Rows.Count > 1)
                         {
                             break;
                         }
                     }
-
+                    
                 }
             }
-            File.AppendAllText(CordnerConfigurationSection.CordnerConfig.OutputLocation.ToString(), csv.ToString());
-            return null;
+            File.AppendAllText(System.Configuration.ConfigurationManager.AppSettings["OutputPath"], csv.ToString());
+            Console.WriteLine("Job Finished");
+            _logger.LogWrite("Finished");
         }
 
-        public List<string> QueryDescriptionRefs()
+        public override void DoCleanup()
+        {
+            Console.WriteLine("Clean up: removing exisiting stock.csv");
+            if (File.Exists(System.Configuration.ConfigurationManager.AppSettings["OutputPath"]))
+            {
+                File.Delete(System.Configuration.ConfigurationManager.AppSettings["OutputPath"]);
+            }
+        }
+
+        private IEnumerable<string> QueryDescriptionRefs()
         {
             var dvEmp = new DataView();
-            var location = CordnerConfigurationSection.CordnerConfig.OutputLocation.ToString();
-
-            using (var connectionHandler = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\Conor\Desktop\Cordners Data Dump\descriptions.xls;Extended Properties='Excel 12.0;IMEX=1;'"))
+            _logger.LogWrite("Getting refs from description file");
+            try
             {
-                connectionHandler.Open();
-                var adp = new OleDbDataAdapter("SELECT * FROM [Sheet1$A:A]", connectionHandler);
+                using (var connectionHandler = new OleDbConnection(System.Configuration.ConfigurationManager.AppSettings["ExcelConnectionString"]))
+                {
+                    connectionHandler.Open();
+                    var adp = new OleDbDataAdapter("SELECT * FROM [Sheet1$A:A]", connectionHandler);
 
-                var dsXls = new DataSet();
-                adp.Fill(dsXls);
-                dvEmp = new DataView(dsXls.Tables[0]);
+                    var dsXls = new DataSet();
+                    adp.Fill(dsXls);
+                    dvEmp = new DataView(dsXls.Tables[0]);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                _logger.LogWrite("Error occured getting refs from description file: " + e);
             }
             
             return (from DataRow row in dvEmp.Table.Rows select row.ItemArray[0].ToString()).ToList();
-
         }
 
-        public string QueryAndBuild(string imageDetails)
+        public override bool IsRepeatable()
         {
-            string querySelect = "SELECT * FROM ShopStaff";
-
-            DataSet data = new DataSet();
-            OpenConnection(connectionPath);
-            try
-            {
-                OleDbCommand myAccessCommand = new OleDbCommand(querySelect, accessConnection);
-                OleDbDataAdapter myDataAdapter = new OleDbDataAdapter(myAccessCommand);
-                myDataAdapter.Fill(data);
-                foreach (DataTable table in data.Tables)
-                    WriteToCsvFile(table, "D:\\Users\\Conor\\ContractWork\\output-" + imageDetails + ".csv");
-
-                myDataAdapter.Dispose();
-            }
-            catch (Exception ex)
-            {
-                return "Error: Failed to retrieve the required data from the DataBase.\n{0}";
-            }
-            finally
-            {
-                accessConnection.Close();
-            }
-            return imageDetails + ".csv CSV file created successfully";
+            return true;
         }
 
-        private void WriteToCsvFile(DataTable dataTable, string filePath)
+        public override int GetRepetitionIntervalTime()
         {
-            StringBuilder fileContent = new StringBuilder();
-            foreach (var col in dataTable.Columns)
-                fileContent.Append(col.ToString() + ",");
-
-            fileContent.Replace(",", Environment.NewLine, fileContent.Length - 1, 1);
-            foreach (DataRow dr in dataTable.Rows)
-            {
-                foreach (var column in dr.ItemArray)
-                    fileContent.Append("\"" + column.ToString() + "\",");
-                fileContent.Replace(",", Environment.NewLine, fileContent.Length - 1, 1);
-            }
-            System.IO.File.WriteAllText(filePath, fileContent.ToString());
+            return 5000;
         }
     }
 }

@@ -50,7 +50,7 @@
     <Compile Include="CordnersConfiguration\CordnerConfigurationSection.cs" />
     <Compile Include="CordnersConfiguration\OutputConfigurationElement.cs" />
     <Compile Include="Database.cs" />
-    <Compile Include="Jobs\StockJob.cs" />
+    <Compile Include="LogWriter.cs" />
     <Compile Include="Mechanism\Job.cs" />
     <Compile Include="Mechanism\JobManager.cs" />
     <Compile Include="Program.cs" />
@@ -60,10 +60,13 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Cordner.config" />
+    <None Include="Cordner.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
