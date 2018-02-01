@@ -32,19 +32,6 @@ namespace StockCSV
                     $"{"store"},{"websites"},{"attribut_set"},{"type"},{"sku"},{"has_options"}, {"name"}, {"page_layout"}, {"options_container"}, {"price"}, {"weight"}, {"status"}, {"visibility"}, {"short_description"}, {"qty"}, {"product_name"}, {"color"}" +
                     $"{"size"},{"tax_class_id"}, {"configurable_attributes"}, {"simples_skus"}, {"manufacturer"}, {"is_in_stock"}, {"categories"}, {"season"}, {"stock_type"}, {"image"}, {"small_image"}, {"thumbnail"}, {"gallery"}, {"condition"}, {"ean"}, {"description"}";
 
-
-                
-
-
-
-
-
-
-
-
-
-
-
                 csv.AppendLine(headers);
                 foreach (var refff in t2TreFs)
                 {
@@ -135,7 +122,8 @@ namespace StockCSV
                                     var descripto = descriptions.Where(x => x.T2TRef == reff)
                                         .Select(y => y.Descriptio).First();
                                     var name = dr["MasterSupplier"] + "  " + descriptions.Where(x => x.T2TRef == reff).Select(y => y.Descriptio).First() + " in " + dr["MasterColour"];
-                                    var newLine = $"{"admin"}, {"admin base"}, {"Default"}, {"simple"}, {groupSkus2}, {"1"}, {name},{"No layout updates."},{"Product Info Column"}, {dr["BASESELL"]}, {"0.01"}, {"Enabled"}, {"Not Visible Individually"}, {short_description}, {actualStock}, {descripto}, {dr["MasterColour"]}";
+                                    var newLine = $"{"admin"}, {"admin base"}, {"Default"}, {"simple"}, {groupSkus2}, {"1"}, {name},{"No layout updates."},{"Product Info Column"}, {dr["BASESELL"]}, {"0.01"}, {"Enabled"}, {"Not Visible Individually"}, {short_description}, {actualStock}, {descripto}, {dr["MasterColour"]}" +
+                                                  $"{"ShoeSizeTODO"}, {"tax class todo"}, {""},{""}, {dr["MasterSupplier"]}, {isStock}, {"TODO categories"}, {""}, {dr["GROUP"]}, {"+/" + reff + ".jpg"}, {"/" + reff + ".jpg"},{"/" + reff + ".jpg"},{"TODO: gallery"}, {"new"}, {""}, {descriptions.Where(x => x.T2TRef == reff).Select(y => y.Description).First()}";
                                     //var newLine = $"{groupSkus2},{actualStock},{isStock}";"
                                     csv.AppendLine(newLine);
                                 }
