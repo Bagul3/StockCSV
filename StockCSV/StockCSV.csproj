@@ -50,9 +50,12 @@
     <Compile Include="CordnersConfiguration\CordnerConfigurationSection.cs" />
     <Compile Include="CordnersConfiguration\OutputConfigurationElement.cs" />
     <Compile Include="Database.cs" />
+    <Compile Include="ImportCSVJob.cs" />
     <Compile Include="LogWriter.cs" />
     <Compile Include="Mechanism\Job.cs" />
     <Compile Include="Mechanism\JobManager.cs" />
+    <Compile Include="Models\Descriptions.cs" />
+    <Compile Include="Models\ExcelMapper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

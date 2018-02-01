@@ -7,24 +7,20 @@ namespace StockCSV.Mechanism
     {
         public void ExecuteJob()
         {
-            if (this.IsRepeatable())
+            if (!this.IsRepeatable()) return;
+            while (true)
             {
-                while (true)
-                {
-                    var start = TimeSpan.Parse("06:30");  // 10 PM
-                    var end = TimeSpan.Parse("06:45");    // 2 AM
-                    var now = DateTime.Now.TimeOfDay;
+                var now = DateTime.Now.TimeOfDay;
 
-                    if (now > start && now < end)
-                    {
+                if (now > GetStartTime() && now < GetEndTime())
+                {
                     
-                            Console.WriteLine($"The Clean Job thread started successfully.");
-                            new LogWriter("The Clean Job thread started successfully");
-                            this.DoCleanup();
-                            this.DoJob();
-                            Thread.Sleep(this.GetRepetitionIntervalTime());
-                    }
+                    Console.WriteLine($"The Clean Job thread started successfully.");
+                    new LogWriter("The Clean Job thread started successfully");
+                    this.DoCleanup();
+                    this.DoJob();
                 }
+                Thread.Sleep(this.GetRepetitionIntervalTime());
             }
         }
 
@@ -40,5 +36,9 @@ namespace StockCSV.Mechanism
         public abstract bool IsRepeatable();
 
         public abstract int GetRepetitionIntervalTime();
+
+        public abstract TimeSpan GetStartTime();
+
+        public abstract TimeSpan GetEndTime();
     }
 }

@@ -9,11 +9,8 @@ using StockCSV.Mechanism;
 
 namespace StockCSV
 {
-    public class Database : Job
+    public class StockCSVJob : Job
     {
-        //private const string OutputPath = @"C:\Users\Conor\Documents\stock.csv";
-        //private const string ExcelConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\Conor\Desktop\Cordners Data Dump\descriptions.xls;Extended Properties='Excel 12.0;IMEX=1;'";
-        //private const string AccessConnectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\Users\Conor\Desktop\Cordners Data Dump\;Extended Properties=dBASE III;";
         private LogWriter _logger = new LogWriter();
 
         public void CreateDbfFile(List<string> T2TREFs)
@@ -172,7 +169,15 @@ namespace StockCSV
             Console.WriteLine("Clean up: removing exisiting stock.csv");
             if (File.Exists(System.Configuration.ConfigurationManager.AppSettings["OutputPath"]))
             {
-                File.Delete(System.Configuration.ConfigurationManager.AppSettings["OutputPath"]);
+                try
+                {
+                    File.Delete(System.Configuration.ConfigurationManager.AppSettings["OutputPath"]);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWrite("Error occured deleting previous stock.csv file, please ensure the file is not been used by another process :" + e);
+                }
+                
             }
         }
 
@@ -185,7 +190,7 @@ namespace StockCSV
                 using (var connectionHandler = new OleDbConnection(System.Configuration.ConfigurationManager.AppSettings["ExcelConnectionString"]))
                 {
                     connectionHandler.Open();
-                    var adp = new OleDbDataAdapter("SELECT * FROM [Sheet1$A:A]", connectionHandler);
+                    var adp = new OleDbDataAdapter("SELECT * FROM [Sheet1$B:B]", connectionHandler);
 
                     var dsXls = new DataSet();
                     adp.Fill(dsXls);
@@ -208,7 +213,7 @@ namespace StockCSV
 
         public override int GetRepetitionIntervalTime()
         {
-            return 5000;
+            return 1800000;
         }
 
         public override TimeSpan GetStartTime()
