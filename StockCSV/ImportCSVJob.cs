@@ -29,7 +29,21 @@ namespace StockCSV
                 var short_description = "";
 
                 var headers =
-                    $"{"store"},{"websites"},{"attribut_set"},{"type"},{"sku"},{"has_options"}, {"name"}, {"page_layout"}, {"options_container"}, {"price"}, {"weight"}, {"status"}, {"visibility"}, {"short_description"}, {"qty"}, {"product_name"}, {"color"}";			
+                    $"{"store"},{"websites"},{"attribut_set"},{"type"},{"sku"},{"has_options"}, {"name"}, {"page_layout"}, {"options_container"}, {"price"}, {"weight"}, {"status"}, {"visibility"}, {"short_description"}, {"qty"}, {"product_name"}, {"color"}" +
+                    $"{"size"},{"tax_class_id"}, {"configurable_attributes"}, {"simples_skus"}, {"manufacturer"}, {"is_in_stock"}, {"categories"}, {"season"}, {"stock_type"}, {"image"}, {"small_image"}, {"thumbnail"}, {"gallery"}, {"condition"}, {"ean"}, {"description"}";
+
+
+                
+
+
+
+
+
+
+
+
+
+
 
                 csv.AppendLine(headers);
                 foreach (var refff in t2TreFs)
