@@ -14,7 +14,7 @@ namespace StockCSV
     {
         private LogWriter _logger = new LogWriter();
         private ExcelMapper _mapper = new ExcelMapper();
-        
+
         public override void DoJob()
         {
             var t2TreFs = ReadImageDetails(@"C:\Users\Conor\Desktop\Cordners Data Dump\images\");
@@ -29,53 +29,17 @@ namespace StockCSV
                 var short_description = "";
 
                 var headers =
-                    $"{"store"},{"websites"},{"attribut_set"},{"type"},{"sku"},{"has_options"}, {"name"}, {"page_layout"}, {"options_container"}, {"price"}, {"weight"}, {"status"}, {"visibility"}, {"short_description"}, {"qty"}, {"product_name"}, {"color"}" +
-                    $"{"size"},{"tax_class_id"}, {"configurable_attributes"}, {"simples_skus"}, {"manufacturer"}, {"is_in_stock"}, {"categories"}, {"season"}, {"stock_type"}, {"image"}, {"small_image"}, {"thumbnail"}, {"gallery"}, {"condition"}, {"ean"}, {"description"}";
+                    $"{"store"},{"websites"},{"attribut_set"},{"type"},{"sku"},{"has_options"}, {"name"}, {"page_layout"}, {"options_container"}, {"price"}, {"weight"}, {"status"}, {"visibility"}, {"short_description"}, {"qty"}, {"product_name"}, {"color"}," +
+                    $" {"size"},{"tax_class_id"}, {"configurable_attributes"}, {"simples_skus"}, {"manufacturer"}, {"is_in_stock"}, {"categories"}, {"season"}, {"stock_type"}, {"image"}, {"small_image"}, {"thumbnail"}, {"gallery"}," +
+                    $" {"condition"}, {"ean"}, {"description"}";
 
                 csv.AppendLine(headers);
-                foreach (var refff in t2TreFs)
+                foreach (var refff in t2TreFs.Where(x => !x.Contains("_")))
                 {
                     var reff = refff.Substring(0, 6);
-                    const string stockQuery = @"SELECT ([T2_BRA].[REF] + [F7]) AS NEWSTYLE, Suppliers.MasterSupplier, Dept.MasterDept, Colour.MasterColour, Colour.F7, T2_HEAD.SHORT, 
-	T2_HEAD.[DESC], T2_HEAD.[GROUP], T2_HEAD.STYPE, T2_HEAD.SIZERANGE, T2_HEAD.SUPPLIER, T2_HEAD.SUPPREF, T2_HEAD.VAT, T2_HEAD.BASESELL, T2_HEAD.SELL, 
-		T2_HEAD.SELLB, T2_HEAD.SELL1, Sum(T2_BRA.Q11) AS QTY1, Sum(T2_BRA.Q12) AS QTY2, Sum(T2_BRA.Q13) AS QTY3, 
-			Sum(T2_BRA.Q14) AS QTY4, Sum(T2_BRA.Q15) AS QTY5, Sum(T2_BRA.Q16) AS QTY6, Sum(T2_BRA.Q17) AS QTY7, Sum(T2_BRA.Q18) AS QTY8, 
-				Sum(T2_BRA.Q19) AS QTY9, Sum(T2_BRA.Q20) AS QTY10, Sum(T2_BRA.Q21) AS QTY11, Sum(T2_BRA.Q22) AS QTY12, Sum(T2_BRA.Q23) AS QTY13, 
-					T2_HEAD.REF,Stocktype.MasterStocktype,SubDept.MasterSubDept,
-                        Sum(T2_BRA.LY11) AS LY1, Sum(T2_BRA.LY12) AS LY2, Sum(T2_BRA.LY13) AS LY3, Sum(T2_BRA.LY14) AS LY4, Sum(T2_BRA.LY15) AS LY5, 
-                            Sum(T2_BRA.LY16) AS LY6, Sum(T2_BRA.LY17) AS LY7, Sum(T2_BRA.LY18) AS LY8, Sum(T2_BRA.LY19) AS LY9, Sum(T2_BRA.LY20) AS LY10, 
-                                Sum(T2_BRA.LY21) AS LY11, Sum(T2_BRA.LY22) AS LY12, Sum(T2_BRA.LY23) AS LY13
-									FROM ((((((T2_BRA INNER JOIN T2_HEAD ON T2_BRA.REF = T2_HEAD.REF) INNER JOIN (SELECT Right(T2_LOOK.[KEY],3) AS NewCol, T2_LOOK.F1 AS MasterColour, Left(T2_LOOK.[KEY],3) AS Col, T2_LOOK.F7
-								FROM T2_LOOK
-								WHERE (Left(T2_LOOK.[KEY],3))='COL') as Colour ON T2_BRA.COLOUR = Colour.NewCol) INNER JOIN 
-
-								(SELECT Mid(T2_LOOK.[KEY],4,6) AS SuppCode, T2_LOOK.F1 AS MasterSupplier
-									FROM T2_LOOK
-										WHERE (((Left(T2_LOOK.[KEY],3))='SUP'))
-											) as  Suppliers ON T2_HEAD.SUPPLIER = Suppliers.SuppCode) INNER JOIN
-
-											(SELECT Right([T2_LOOK].[KEY],3) AS DeptCode, T2_LOOK.F1 AS MasterDept
-												FROM T2_LOOK
-													WHERE (Left([T2_LOOK].[KEY],3))='TYP') As Dept ON T2_HEAD.STYPE = Dept.DeptCode) INNER JOIN
-								(SELECT Mid(T2_LOOK.[KEY], 4, 6) AS StkType,
-									T2_LOOK.F1 AS MasterStocktype
-										FROM T2_LOOK
-											WHERE Left(T2_LOOK.[KEY], 3) = 'CAT'
-											) as Stocktype
-									ON T2_HEAD.[GROUP] = Stocktype.StkType) 	LEFT JOIN
-
-									(SELECT Right(T2_LOOK.[KEY],3) AS SubDeptCode, T2_LOOK.F1 AS MasterSubDept
-										FROM T2_LOOK
-											WHERE (Left(T2_LOOK.[KEY],3))='US2') AS SubDept ON T2_HEAD.USER2 = SubDept.SubDeptCode)
-                                    WHERE [T2_BRA].[REF] = ?
-									GROUP BY ([T2_BRA].[REF] + [F7]), Suppliers.MasterSupplier, Dept.MasterDept, Colour.MasterColour, Colour.F7,
-									 T2_HEAD.SHORT, T2_HEAD.[DESC], T2_HEAD.[GROUP], T2_HEAD.STYPE, T2_HEAD.SIZERANGE, T2_HEAD.SUPPLIER, T2_HEAD.SUPPREF,
-									  T2_HEAD.VAT, T2_HEAD.BASESELL,
-									 T2_HEAD.SELL, T2_HEAD.SELLB, T2_HEAD.SELL1,T2_HEAD.REF,stocktype.MasterStocktype,SubDept.MasterSubDept
-									ORDER BY ([T2_BRA].[REF] + [F7]) DESC;";
 
                     var data = new DataSet();
-                    var myAccessCommand = new OleDbCommand(stockQuery, connectionHandler);
+                    var myAccessCommand = new OleDbCommand(SqlQuery.ImportProductsQuery, connectionHandler);
                     myAccessCommand.Parameters.AddWithValue("?", reff);
 
                     var myDataAdapter = new OleDbDataAdapter(myAccessCommand);
@@ -121,11 +85,32 @@ namespace StockCSV
                                     short_description = BuildShortDescription(descriptions.First(x => x.T2TRef == reff));
                                     var descripto = descriptions.Where(x => x.T2TRef == reff)
                                         .Select(y => y.Descriptio).First();
-                                    var name = dr["MasterSupplier"] + "  " + descriptions.Where(x => x.T2TRef == reff).Select(y => y.Descriptio).First() + " in " + dr["MasterColour"];
-                                    var newLine = $"{"admin"}, {"admin base"}, {"Default"}, {"simple"}, {groupSkus2}, {"1"}, {name},{"No layout updates."},{"Product Info Column"}, {dr["BASESELL"]}, {"0.01"}, {"Enabled"}, {"Not Visible Individually"}, {short_description}, {actualStock}, {descripto}, {dr["MasterColour"]}" +
-                                                  $"{"ShoeSizeTODO"}, {"tax class todo"}, {""},{""}, {dr["MasterSupplier"]}, {isStock}, {"TODO categories"}, {""}, {dr["GROUP"]}, {"+/" + reff + ".jpg"}, {"/" + reff + ".jpg"},{"/" + reff + ".jpg"},{"TODO: gallery"}, {"new"}, {""}, {descriptions.Where(x => x.T2TRef == reff).Select(y => y.Description).First()}";
-                                    //var newLine = $"{groupSkus2},{actualStock},{isStock}";"
-                                    csv.AppendLine(newLine);
+
+                                    var size = "";
+                                    if (i < 10)
+                                    {
+                                        size = dr["S0" + i].ToString();
+                                    }
+                                    else
+                                    {
+                                        size = dr["S" + i].ToString();
+                                    }
+                                    if (size.Contains("½"))
+                                        size = size.Replace("½", ".5");
+                                    if (!string.IsNullOrEmpty(size))
+                                    {
+                                        var galleryImagesString = BuildGalleryImages(t2TreFs, reff);
+                                        var vat = dr["VAT"].ToString() == "A" ? "TAX" : "NONE";
+                                        var name = dr["MasterSupplier"] + "  " + descriptions.Where(x => x.T2TRef == reff).Select(y => y.Descriptio).First() + " in " + dr["MasterColour"];
+                                        var newLine = $"{"admin"}, {"admin base"}, {"Default"}, {"simple"}, {groupSkus2}, {"1"}, {name},{"No layout updates."},{"Product Info Column"}, {dr["BASESELL"]}, {"0.01"}, {"Enabled"}, {"Not Visible Individually"}, " +
+                                                      $"{short_description}, {actualStock}, {descripto}, {dr["MasterColour"]}, " +
+                                                      $"{dr["SIZERANGE"] + size}, {vat}, {""},{""}, {dr["MasterSupplier"]}, {isStock}, " +
+                                                      $"{"TODO categories"}, {""}, {dr["GROUP"]}, {"+/" + reff + ".jpg"}, {"/" + reff + ".jpg"},{"/" + reff + ".jpg"},{galleryImagesString}, {"new"}, {""}, " +
+                                                      $"{descriptions.Where(x => x.T2TRef == reff).Select(y => y.Description).First()}";
+                                        //var newLine = $"{groupSkus2},{actualStock},{isStock}";"
+                                        csv.AppendLine(newLine);
+                                    }
+                                    
                                 }
                                 actualStock = "0";
                             }
@@ -134,11 +119,18 @@ namespace StockCSV
                         isStock = inStockFlag ? 1 : 0;
                         if (!string.IsNullOrEmpty(dr["NewStyle"].ToString()))
                         {
-                            var name = dr["MasterSupplier"] + " in " + dr["MasterColour"];
+                            var name = descriptions.Where(x => x.T2TRef == reff).Select(y => y.Descriptio).First() + " in " + dr["MasterColour"];
                             short_description = BuildShortDescription(descriptions.First(x => x.T2TRef == reff));
                             var descripto = descriptions.Where(x => x.T2TRef == reff)
                                 .Select(y => y.Descriptio).First();
-                            var newLine2 = $"{"admin"}, {"admin base"}, {"Default"}, {"configurable"}, {groupSkus}, {"1"}, {name}, {"No layout updates."},{"Product Info Column"},{dr["BASESELL"]}, {"0.01"}, {"Enabled"}, {"Catalog Search"}, {short_description}, {0}, {descripto}, {dr["MasterColour"]}";
+                            var galleryImagesString = BuildGalleryImages(t2TreFs, reff);
+                            var vat = dr["VAT"].ToString() == "A" ? "TAX" : "NONE";
+                            var newLine2 = $"{"admin"}, {"admin base"}, {"Default"}, {"configurable"}, {groupSkus}, {"1"}, {name}, " +
+                                           $"{"No layout updates."},{"Product Info Column"},{dr["BASESELL"]}, {"0.01"}, {"Enabled"}, " +
+                                           $"{"Catalog Search"}, {short_description}, {0}, {descripto}, {dr["MasterColour"]}, " +
+                                           $"{""}, {vat}, {"size"},{"TODO"}, {dr["MasterSupplier"]}, {isStock}, " +
+                                           $"{"TODO categories"}, {""}, {dr["GROUP"]}, {"+/" + reff + ".jpg"}, {"/" + reff + ".jpg"},{"/" + reff + ".jpg"},{galleryImagesString}, {"new"}, {""}, " +
+                                           $"{descriptions.Where(x => x.T2TRef == reff).Select(y => y.Description).First()}";
                             csv.AppendLine(newLine2);
                         }
                         inStockFlag = false;
@@ -147,19 +139,25 @@ namespace StockCSV
                             break;
                         }
                     }
-                    
+
                 }
             }
-            File.AppendAllText(@"C: \Users\Conor\Desktop\import_products.csv", csv.ToString());
+            File.AppendAllText(@"C:\Users\Conor\Desktop\import_products_regen.csv", csv.ToString());
             Console.WriteLine("Job Finished");
             _logger.LogWrite("Finished");
+        }
+
+        private string BuildGalleryImages(IEnumerable<string> t2TreFs, string reff)
+        {
+            var images = t2TreFs.Where(t2tRef => t2tRef.Contains(reff)).ToList();
+            return images.Aggregate("", (current, image) => current + ("/" + image + ".jpg;"));
         }
 
         public override void DoCleanup()
         {
 
         }
-        
+
         public override bool IsRepeatable()
         {
             return true;
@@ -209,7 +207,7 @@ namespace StockCSV
             {
                 var imageDetails = Directory.GetFiles(path, "*.jpg*", SearchOption.AllDirectories)
                     .ToList();
-                return RemoveUnUsedValues(ParseImageNames(imageDetails));
+                return ParseImageNames(imageDetails);
             }
             catch (Exception e)
             {
@@ -223,9 +221,9 @@ namespace StockCSV
             return imageDetails.Select(Path.GetFileNameWithoutExtension).ToList();
         }
 
-        private static IEnumerable<string> RemoveUnUsedValues(IEnumerable<string> imageDetails)
-        {
-            return imageDetails.Where(image => !image.Contains("_")).ToList();
-        }
+        //        private static IEnumerable<string> RemoveUnUsedValues(IEnumerable<string> imageDetails)
+        //        {
+        //            return imageDetails.Where(image => !image.Contains("_")).ToList();
+        //        }
     }
 }
