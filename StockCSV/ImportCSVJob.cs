@@ -102,10 +102,11 @@ namespace StockCSV
                                         var galleryImagesString = BuildGalleryImages(t2TreFs, reff);
                                         var vat = dr["VAT"].ToString() == "A" ? "TAX" : "NONE";
                                         var name = dr["MasterSupplier"] + "  " + descriptions.Where(x => x.T2TRef == reff).Select(y => y.Descriptio).First() + " in " + dr["MasterColour"];
-                                        var newLine = $"{"admin"}, {"admin base"}, {"Default"}, {"simple"}, {groupSkus2}, {"1"}, {name},{"No layout updates."},{"Product Info Column"}, {dr["BASESELL"]}, {"0.01"}, {"Enabled"}, {"Not Visible Individually"}, " +
+                                        var newLine = $"{"admin"}," +
+                                                      $"{AdminBase()}, {"Default"}, {"simple"}, {groupSkus2}, {"1"}, {name},{"No layout updates."},{"Product Info Column"}, {dr["BASESELL"]}, {"0.01"}, {"Enabled"}, {"Not Visible Individually"}, " +
                                                       $"{short_description}, {actualStock}, {descripto}, {dr["MasterColour"]}, " +
                                                       $"{dr["SIZERANGE"] + size}, {vat}, {""},{""}, {dr["MasterSupplier"]}, {isStock}, " +
-                                                      $"{"TODO categories"}, {""}, {dr["GROUP"]}, {"+/" + reff + ".jpg"}, {"/" + reff + ".jpg"},{"/" + reff + ".jpg"},{galleryImagesString}, {"new"}, {""}, " +
+                                                      $"{""}, {""}, {dr["GROUP"]}, {"+/" + reff + ".jpg"}, {"/" + reff + ".jpg"},{"/" + reff + ".jpg"},{galleryImagesString}, {"new"}, {""}, " +
                                                       $"{descriptions.Where(x => x.T2TRef == reff).Select(y => y.Description).First()}";
                                         //var newLine = $"{groupSkus2},{actualStock},{isStock}";"
                                         csv.AppendLine(newLine);
@@ -124,12 +125,36 @@ namespace StockCSV
                             var descripto = descriptions.Where(x => x.T2TRef == reff)
                                 .Select(y => y.Descriptio).First();
                             var galleryImagesString = BuildGalleryImages(t2TreFs, reff);
+                            var simpleSkus = BuildSimpleSku(t2TreFs, reff);
                             var vat = dr["VAT"].ToString() == "A" ? "TAX" : "NONE";
-                            var newLine2 = $"{"admin"}, {"admin base"}, {"Default"}, {"configurable"}, {groupSkus}, {"1"}, {name}, " +
+                            var category = dr["MasterStocktype"] + "/Shop By Department/" + dr["MasterDept"] + ";;";
+
+                            if (dr["MasterSubDept"] != "ANY" || dr["MasterSubDept"] != "")
+                            {
+                                category = category + dr["MasterStocktype"] + "/Shop By Department/" +
+                                           dr["MasterDept"] + "/" + dr["MasterSubDept"] + "::1::1::0;;";
+                            }
+
+                            category = category + dr["MasterStocktype"] + "/Shop By Brand/" +
+                                       dr["MasterSupplier"] + ";;";
+                            category = category + dr["MasterStocktype"] + "/Shop By Brand/" +
+                                       dr["MasterSupplier"] + "/" + dr["MasterDept"] + "::1::1::0;;";
+
+                            if (dr["MasterSubDept"] != "ANY" || dr["MasterSubDept"] != "")
+                            {
+                                category = category + dr["MasterStocktype"] + "/Shop By Brand/" +
+                                           dr["MasterSupplier"] + "/" + dr["MasterDept"] +
+                                           "/" + dr["MasterSubDept"] + "::1::1::0;;";
+                            }
+
+                            category = category + "Brands/" + dr["MasterSupplier"];
+                            
+                            var newLine2 = $"{"admin"}," +
+                                           $"{AdminBase()}, {"Default"}, {"configurable"}, {groupSkus}, {"1"}, {name}, " +
                                            $"{"No layout updates."},{"Product Info Column"},{dr["BASESELL"]}, {"0.01"}, {"Enabled"}, " +
                                            $"{"Catalog Search"}, {short_description}, {0}, {descripto}, {dr["MasterColour"]}, " +
-                                           $"{""}, {vat}, {"size"},{"TODO"}, {dr["MasterSupplier"]}, {isStock}, " +
-                                           $"{"TODO categories"}, {""}, {dr["GROUP"]}, {"+/" + reff + ".jpg"}, {"/" + reff + ".jpg"},{"/" + reff + ".jpg"},{galleryImagesString}, {"new"}, {""}, " +
+                                           $"{""}, {vat}, {"size"},{simpleSkus}, {dr["MasterSupplier"]}, {isStock}, " +
+                                           $"{category}, {""}, {dr["GROUP"]}, {"+/" + reff + ".jpg"}, {"/" + reff + ".jpg"},{"/" + reff + ".jpg"},{galleryImagesString}, {"new"}, {""}, " +
                                            $"{descriptions.Where(x => x.T2TRef == reff).Select(y => y.Description).First()}";
                             csv.AppendLine(newLine2);
                         }
@@ -146,16 +171,41 @@ namespace StockCSV
             Console.WriteLine("Job Finished");
             _logger.LogWrite("Finished");
         }
+        
 
-        private string BuildGalleryImages(IEnumerable<string> t2TreFs, string reff)
+        private static string BuildGalleryImages(IEnumerable<string> t2TreFs, string reff)
         {
             var images = t2TreFs.Where(t2tRef => t2tRef.Contains(reff)).ToList();
             return images.Aggregate("", (current, image) => current + ("/" + image + ".jpg;"));
         }
 
+        private static string BuildSimpleSku(IEnumerable<string> t2TreFs, string reff)
+        {
+            var output = "\"";
+            foreach (var t2tReff in t2TreFs)
+            {
+                if (t2tReff.Contains(reff))
+                {
+                    output += t2tReff + ", ";
+                }
+            }
+            return output.Remove(output.Length-3) + "\"";
+        }
+
+        private static string AdminBase()
+        {
+            var output = "\"";
+            var fields = new string[]{"admin","base"};
+            foreach (var field in fields)
+            {
+                    output += field + ", ";
+            }
+            return output + "\"";
+        }
+
         public override void DoCleanup()
         {
-
+           
         }
 
         public override bool IsRepeatable()
