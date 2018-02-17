@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
 using System.IO;
-using System.Linq;
 using System.Text;
 using StockCSV.Mechanism;
 
@@ -27,36 +26,39 @@ namespace StockCSV
                 command.ExecuteNonQuery();
                 connection.Close();
             }
-            
+
             using (var connection = new OleDbConnection())
             {
                 connection.Open();
                 var command = connection.CreateCommand();
                 foreach (var t2Tref in T2TREFs)
                 {
-                    var sql = "Insert INTO DESCRIPT (T2TREF) VALUES ({0});";                    
+                    var sql = "Insert INTO DESCRIPT (T2TREF) VALUES ({0});";
                     sql = string.Format(sql, String.Format("{0:00000}", t2Tref));
                     command.CommandText = sql;
                     command.ExecuteNonQuery();
                 }
-            }                
+            }
         }
 
-        public override void DoJob()
+        public override string DoJob(string reff)
         {
-            var t2TreFs = QueryDescriptionRefs();
-            var csv = new StringBuilder();
-            Console.WriteLine("Generating stock.csv: This will take a few minutes, please wait....");
-            _logger.LogWrite("Generating stock.csv: This will take a few minutes, please wait....");
-
-            using (var connectionHandler = new OleDbConnection(System.Configuration.ConfigurationManager.AppSettings["AccessConnectionString"]))
+            //            var t2TreFs = QueryDescriptionRefs();
+            try
             {
-                connectionHandler.Open();
 
-                var headers = $"{"sku"},{"qty"},{"is_in_stock"}";
-                csv.AppendLine(headers);
-                foreach (var reff in t2TreFs)
+
+                var csv = new StringBuilder();
+                Console.WriteLine("Generating stock.csv: Ref: " + reff);
+
+                using (var connectionHandler = new OleDbConnection(System.Configuration.ConfigurationManager.AppSettings["AccessConnectionString"]))
                 {
+                    connectionHandler.Open();
+
+                    //                var headers = $"{"sku"},{"qty"},{"is_in_stock"}";
+                    //                csv.AppendLine(headers);
+                    //                foreach (var reff in t2TreFs)
+                    //                {
                     const string stockQuery = @"SELECT ([T2_BRA].[REF] + [F7]) AS NewStyle, T2_HEAD.SHORT, T2_HEAD.[DESC], T2_HEAD.[GROUP], 
 		T2_HEAD.STYPE, T2_HEAD.SIZERANGE,
 					T2_HEAD.SUPPLIER, T2_HEAD.SUPPREF, T2_HEAD.VAT, 
@@ -84,7 +86,7 @@ namespace StockCSV
 									T2_LOOK.F1 AS MasterStocktype
 										FROM T2_LOOK
 											WHERE Left(T2_LOOK.[KEY], 3) = 'CAT'
-											) as Stocktype
+											ORDER BY Trim(Substring([T2_LOOK].[KEY],4,6))) as Stocktype
 									ON T2_HEAD.[GROUP] = Stocktype.StkType) 	LEFT JOIN
 
 									(SELECT Right(T2_LOOK.[KEY],3) AS SubDeptCode, T2_LOOK.F1 AS MasterSubDept
@@ -140,7 +142,7 @@ namespace StockCSV
                                     var append = (1000 + i).ToString();
                                     groupSkus = dr["NewStyle"].ToString();
                                     var groupSkus2 = dr["NewStyle"] + append.Substring(1, 3);
-                                    var newLine = $"{groupSkus2},{actualStock},{isStock}";
+                                    var newLine = $"{"\"" + groupSkus2 + "\""},{"\"" + actualStock + "\""},{"\"" + isStock + "\""}";
                                     csv.AppendLine(newLine);
                                 }
                                 actualStock = "0";
@@ -150,7 +152,7 @@ namespace StockCSV
                         isStock = inStockFlag ? 1 : 0;
                         if (!string.IsNullOrEmpty(dr["NewStyle"].ToString()))
                         {
-                            var newLine2 = $"{groupSkus},{actualStock},{isStock}";
+                            var newLine2 = $"{"\"" + groupSkus + "\""},{"\"" + actualStock + "\""},{"\"" + isStock + "\""}";
                             csv.AppendLine(newLine2);
                         }
                         inStockFlag = false;
@@ -159,12 +161,19 @@ namespace StockCSV
                             break;
                         }
                     }
-                    
+
+                    //}
                 }
+                Console.WriteLine("Job Finished");
+                _logger.LogWrite("Finished");
+                return csv.ToString();
             }
-            File.AppendAllText(System.Configuration.ConfigurationManager.AppSettings["OutputPath"], csv.ToString());
-            Console.WriteLine("Job Finished");
-            _logger.LogWrite("Finished");
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                _logger.LogWrite(e.Message + e.StackTrace);
+                throw;
+            }
         }
 
         public override void DoCleanup()
@@ -176,30 +185,7 @@ namespace StockCSV
             }
         }
 
-        private IEnumerable<string> QueryDescriptionRefs()
-        {
-            var dvEmp = new DataView();
-            _logger.LogWrite("Getting refs from description file");
-            try
-            {
-                using (var connectionHandler = new OleDbConnection(System.Configuration.ConfigurationManager.AppSettings["ExcelConnectionString"]))
-                {
-                    connectionHandler.Open();
-                    var adp = new OleDbDataAdapter("SELECT * FROM [Sheet1$A:A]", connectionHandler);
 
-                    var dsXls = new DataSet();
-                    adp.Fill(dsXls);
-                    dvEmp = new DataView(dsXls.Tables[0]);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                _logger.LogWrite("Error occured getting refs from description file: " + e);
-            }
-            
-            return (from DataRow row in dvEmp.Table.Rows select row.ItemArray[0].ToString()).ToList();
-        }
 
         public override bool IsRepeatable()
         {

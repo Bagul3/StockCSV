@@ -8,12 +8,13 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>StockCSV</RootNamespace>
     <AssemblyName>StockCSV</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -50,7 +51,6 @@
     <Compile Include="CordnersConfiguration\CordnerConfigurationSection.cs" />
     <Compile Include="CordnersConfiguration\OutputConfigurationElement.cs" />
     <Compile Include="Database.cs" />
-    <Compile Include="ImportCSVJob.cs" />
     <Compile Include="LogWriter.cs" />
     <Compile Include="Mechanism\Job.cs" />
     <Compile Include="Mechanism\JobManager.cs" />

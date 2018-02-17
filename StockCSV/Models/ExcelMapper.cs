@@ -40,7 +40,7 @@ namespace StockCSV.Models
                 var descrip = new Descriptions()
                 {
                     T2TRef = (from DataRow row in dvEmp.Table.Rows select (string)row["T2TREF"]).ElementAt(i),
-                    Descriptio = (from DataRow row in dvEmp.Table.Rows select (string)row["DESCRIPTIO"]).ElementAt(i),
+                    Descriptio = (from DataRow row in dvEmp.Table.Rows select (string)row["TITLE"]).ElementAt(i),
                     Description = (from DataRow row in dvEmp.Table.Rows select (string)row["DESCRIPTION"]).ElementAt(i),
                     Bullet1 = (from DataRow row in dvEmp.Table.Rows select (string)row["Bullet 1"]).ElementAt(i),
                     Bullet2 = (from DataRow row in dvEmp.Table.Rows select (string)row["Bullet 2"]).ElementAt(i),
